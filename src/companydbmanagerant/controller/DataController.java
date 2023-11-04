@@ -281,6 +281,19 @@ public class DataController {
             model.refreshSelectedEmployee(selectedRow);
             Employee selectedEmployee = model.getSelectedEmployee();
             if (selectedEmployee != null) {
+                boolean isRootEmployee = EmployeeDAO.isTargetRootEmployee(selectedEmployee);
+                if (isRootEmployee) {
+                    String newRootSsn = EmployeeDAO.deleteRootEmployee(selectedEmployee);
+                    if (newRootSsn.isEmpty()) {
+                        // 삭제 실패
+                        view.notifyUpdateFailed("루트 직원 삭제 실패. 상속 직원이 없습니다.");
+                    } else {
+                        // 삭제 성공
+                        retrieveDB();
+                        view.notifyUpdateSuccess("새로운 루트 직원: " + newRootSsn);
+                    }
+                    return;
+                }
                 boolean deleteSuccess = EmployeeDAO.deleteEmployee(selectedEmployee);
                 if (deleteSuccess) {
                     // 업데이트 성공

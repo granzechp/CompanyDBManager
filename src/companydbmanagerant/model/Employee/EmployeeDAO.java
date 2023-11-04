@@ -258,13 +258,131 @@ public class EmployeeDAO {
         }
     }
 
-    private static void changeSuperviseSsn(Employee employee) {
+    public static boolean isTargetRootEmployee(Employee employee) {
+        Connection conn = null;
+        PreparedStatement pstmt = null;
+        ResultSet rs = null;
+
+        boolean isRoot = false;
+        try {
+            conn = DatabaseUtils.connect();
+            String sql = "SELECT * FROM EMPLOYEE WHERE Ssn=" + employee.getSsn();
+
+            pstmt = conn.prepareStatement(sql);
+            rs = pstmt.executeQuery();
+
+            if (rs.next()) {
+                String SuperSsn = rs.getString("Super_ssn");
+                if (SuperSsn == null) {
+                    isRoot = true;
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return isRoot;
+    }
+
+    private static String getHeritorSsn(Employee employee) {
+        Connection conn = null;
+        PreparedStatement pstmt = null;
+        ResultSet rs = null;
+
+        String heritorSsn = "";
+        try {
+            conn = DatabaseUtils.connect();
+            String sql = "SELECT * FROM EMPLOYEE WHERE Super_ssn=" + employee.getSsn();
+            pstmt = conn.prepareStatement(sql);
+
+            rs = pstmt.executeQuery();
+            // 루트 직원을 직속으로 하는 부하가 있다면 삭제 가능
+            if (rs.next()) {
+                heritorSsn = rs.getString("Ssn");
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return heritorSsn;
+    }
+
+    public static String deleteRootEmployee(Employee employee) {
+        // 고려사항
+        // 0. 삭제하려는 직원이 루트 직원이라면?
+        // 1. 루트 직원의 직속 부하가 없는 경우 -> 삭제 불가
+        // 2. 루트 직원의 직속 부하가 있는 경우 -> 직속 부하 중 한 명을 루트로 삼는다.
+        //      이전 직속 부하들의 Super_ssn을 새로운 루트 직원의 Ssn으로 변경한다.
+        //      새로운 루트 직원의 직속 상사는 Null로 변경한다.
+        // 3. Department의 Mgr_ssn 필드 기본값을 새로운 루트 직원의 Ssn으로 변경한다.
+        // 4. Department의 Mgr_ssn 중 기존 루트 직원의 Ssn을 가지는 필드 또한 새로운 루트 직원의 Ssn으로 변경한다.
+        // 5. Works_on, Dependent를 모두 삭제한다.
+
         Connection conn = null;
         PreparedStatement pstmt = null;
 
+        String originRootSsn = employee.getSsn();
+        String heritorSsn = getHeritorSsn(employee);
+
+        if (heritorSsn.isEmpty()) {
+            return "";
+        }
+
         try {
             conn = DatabaseUtils.connect();
-            System.out.println("DB CONNECTED");
+
+            // 새로운 루트 직원의 직속 상사 Null로 변환
+            String updateHeritorSupervisorNullSql = "UPDATE EMPLOYEE SET Super_ssn=NULL WHERE Ssn=" + heritorSsn;
+            pstmt = conn.prepareStatement(updateHeritorSupervisorNullSql);
+            pstmt.executeUpdate();
+
+            // 기존 루트 직원의 부하들의 직속 상사를 새로운 루트 직원으로 변경
+            String changePrevSupervisorToNewRoot = "UPDATE EMPLOYEE SET Super_ssn=" + heritorSsn + " WHERE Super_ssn=" + originRootSsn;
+            pstmt = conn.prepareStatement(changePrevSupervisorToNewRoot);
+            pstmt.executeUpdate();
+
+            // 부서의 기본 매니저 Ssn을 새로운 루트 직원의 Ssn으로 변경
+            String alterTableDefaultSql = "ALTER TABLE DEPARTMENT ALTER Mgr_ssn SET DEFAULT " + heritorSsn;
+            pstmt = conn.prepareStatement(alterTableDefaultSql);
+            pstmt.executeUpdate();
+
+            // 기존 루트 직원이 매니저로 있던 부서의 매니저 변경
+            String changeDepartmentMangerSql = "UPDATE DEPARTMENT SET Mgr_ssn=" + heritorSsn + " WHERE Mgr_ssn=" + originRootSsn;
+            pstmt = conn.prepareStatement(changeDepartmentMangerSql);
+            pstmt.executeUpdate();
+
+            // 기존 루트 직원의 부양 가족 삭제
+            deleteDependents(conn, employee);
+
+            // 기존 루트 직원의 근무 기록 삭제
+            deleteWorksOn(conn, employee);
+
+            // 기존 루트 직원 레코드 삭제
+            String deleteRootEmployeeSql = "DELETE FROM EMPLOYEE WHERE Ssn=" + originRootSsn;
+            pstmt = conn.prepareStatement(deleteRootEmployeeSql);
+            pstmt.executeUpdate();
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        } finally {
+            // 사용한 자원 반환
+            try {
+                if (pstmt != null) {
+                    pstmt.close();
+                }
+                if (conn != null) {
+                    conn.close();
+                }
+            } catch (SQLException e) {
+            }
+        }
+
+        return heritorSsn;
+    }
+
+    private static void changeSuperviseSsn(Connection conn, Employee employee) {
+        PreparedStatement pstmt = null;
+
+        try {
             String ssnOfTargetEmployee = employee.getSsn();
             String superSsnOfTargetEmployee = employee.getSuperSsn();
 
@@ -275,128 +393,64 @@ public class EmployeeDAO {
 
         } catch (SQLException e) {
             e.printStackTrace();
-        } finally {
-            // 사용한 자원 반환
-            try {
-                if (pstmt != null) {
-                    pstmt.close();
-                }
-                if (conn != null) {
-                    conn.close();
-                }
-            } catch (SQLException e) {
-            }
         }
     }
 
-    private static void updateManagerToDefault(Employee employee) {
-        Connection conn = null;
+    private static void updateManagerToDefault(Connection conn, Employee employee) {
         PreparedStatement pstmt = null;
-        ResultSet rs = null;
 
         try {
-            conn = DatabaseUtils.connect();
-            System.out.println("DB CONNECTED");
-
             String sql = "UPDATE DEPARTMENT SET Mgr_Ssn=DEFAULT WHERE Mgr_Ssn=" + employee.getSsn();
             pstmt = conn.prepareStatement(sql);
 
             pstmt.executeUpdate();
         } catch (SQLException e) {
             e.printStackTrace();
-        } finally {
-            // 사용한 자원 반환
-            try {
-                if (pstmt != null) {
-                    pstmt.close();
-                }
-                if (conn != null) {
-                    conn.close();
-                }
-            } catch (SQLException e) {
-            }
         }
     }
 
-    private static void deleteDependents(Employee employee) {
-        Connection conn = null;
+    private static void deleteDependents(Connection conn, Employee employee) {
         PreparedStatement pstmt = null;
 
         try {
-            conn = DatabaseUtils.connect();
-            System.out.println("DB CONNECTED");
-
             String sql = "DELETE FROM DEPENDENT WHERE Essn=" + employee.getSsn();
             pstmt = conn.prepareStatement(sql);
 
             pstmt.executeUpdate();
         } catch (SQLException e) {
             e.printStackTrace();
-        } finally {
-            // 사용한 자원 반환
-            try {
-                if (pstmt != null) {
-                    pstmt.close();
-                }
-                if (conn != null) {
-                    conn.close();
-                }
-            } catch (SQLException e) {
-            }
         }
     }
 
-    public static void deleteWorksOn(Employee employee) {
-        Connection conn = null;
+    public static void deleteWorksOn(Connection conn, Employee employee) {
         PreparedStatement pstmt = null;
 
         try {
-            conn = DatabaseUtils.connect();
-            System.out.println("DB CONNECTED");
-
             String sql = "DELETE FROM WORKS_ON WHERE Essn=" + employee.getSsn();
             pstmt = conn.prepareStatement(sql);
 
             pstmt.executeUpdate();
         } catch (SQLException e) {
             e.printStackTrace();
-        } finally {
-            // 사용한 자원 반환
-            try {
-                if (pstmt != null) {
-                    pstmt.close();
-                }
-                if (conn != null) {
-                    conn.close();
-                }
-            } catch (SQLException e) {
-            }
         }
     }
 
     public static boolean deleteEmployee(Employee employee) {
-        // 고려사항
-        // 1. 삭제하려는 직원이 만약 다른이의 supervisor라면? -> supervisee의 supervisor를 null로...?
-        // 2. 삭제하려는 직원이 만약 부서장이라면? -> default로 변경
-        // 3. 삭제하려는 직원의 dependent? -> 전원 삭제
-        // 4. 삭제하려는 직원의 works_on? -> 전체 삭제
-
-        // 삭제하려는 직원이 다른이의 supervisor -> 해당 직원을 참조하던 모든 supervisee의 ssn을 superssn이 null인 사람의 ssn으로
-        changeSuperviseSsn(employee);
-        // 삭제하려는 직원이 만약 부서장이라면? -> 해당 부서의 부서장은 default로 변경
-        updateManagerToDefault(employee);
-        // 삭제하려는 직원의 dependent 전부 삭제
-        deleteDependents(employee);
-        // 삭제하려는 직원의 works_on 전부 삭제
-        deleteWorksOn(employee);
-
-        // 해당 직원 삭제
         Connection conn = null;
         PreparedStatement pstmt = null;
 
         try {
             conn = DatabaseUtils.connect();
             System.out.println("DB CONNECTED");
+
+            // 삭제하려는 직원이 다른이의 supervisor -> 해당 직원을 참조하던 모든 supervisee의 ssn을 삭제하려는 직원의 superssn으로
+            changeSuperviseSsn(conn, employee);
+            // 삭제하려는 직원이 만약 부서장이라면? -> 해당 부서의 부서장은 default로 변경
+            updateManagerToDefault(conn, employee);
+            // 삭제하려는 직원의 dependent 전부 삭제
+            deleteDependents(conn, employee);
+            // 삭제하려는 직원의 works_on 전부 삭제
+            deleteWorksOn(conn, employee);
 
             String sql = "DELETE FROM EMPLOYEE WHERE Ssn=" + employee.getSsn();
             pstmt = conn.prepareStatement(sql);
