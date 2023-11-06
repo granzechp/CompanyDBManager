@@ -16,11 +16,13 @@ import companydbmanagerant.model.LoginFormDataDTO;
 import companydbmanagerant.model.SQLQueryBuilder;
 import companydbmanagerant.model.TableModel.AllEditTableModel;
 import companydbmanagerant.model.TableModel.EmployeeTableModel;
+import companydbmanagerant.model.TableModel.SortByTableModel;
 import companydbmanagerant.view.Main.EmployeeAddPanel;
 import companydbmanagerant.view.Main.EmployeeEditAllPanel;
 import companydbmanagerant.view.Main.EmployeeEditPanel;
 import companydbmanagerant.view.Main.FormDashboard;
 import companydbmanagerant.view.Main.QueryBuilderForm.QueryBuilderForm;
+import companydbmanagerant.view.Main.SortByPanel;
 
 import companydbmanagerant.view.Modal.Modal;
 import java.awt.Color;
@@ -62,7 +64,7 @@ public class DataView extends javax.swing.JFrame {
     private Modal emplyoeeEditModal;
     private Modal emplyoeeAddModal;
     private Modal emplyoeeDelModal;
-
+  private Modal sortByModal;
     /**
      * Creates new form MainFrame
      */
@@ -545,7 +547,26 @@ public class DataView extends javax.swing.JFrame {
             queryBuilderForm = new QueryBuilderForm(departments);
         }
     }
+    //======================================================================
+    // SortBy 관련 관련 (MODEL 단)
+    //======================================================================   
+    public void showSortByDialog(SortByTableModel sortByTableModel) {
+        Map<String, ActionListener> buttonListeners = new HashMap<>();
+        buttonListeners.put("exitBtnCircle", null);
+//        buttonListeners.put("executeBtn", listener);
+        sortByModal = new Modal(this, new SortByPanel(sortByTableModel), buttonListeners);
+    }
+    
+    public void addSortByButtonListener(ActionListener listener){
+        
+        FormDashboard formDashboard = mainForm.getFormDashboard();
+        formDashboard.getSortByBtn().addActionListener(listener);
 
+        
+    }
+    
+    
+    
     // ================================================
     // ================================================
     // ================================================

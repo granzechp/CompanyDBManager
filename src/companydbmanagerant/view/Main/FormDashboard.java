@@ -67,6 +67,14 @@ public class FormDashboard extends javax.swing.JPanel {
                 + "borderColor : rgb(242, 242, 242);"
                 + "focusedBackground : rgb(230, 230, 230);"
                 + "focusedBorderColor : rgb(220, 220, 220)");
+        SortByBtn.putClientProperty(FlatClientProperties.STYLE, ""
+                + "arc:25;"
+                + "background : rgb(242, 242, 242);"
+                + "foreground : rgb(20, 20, 20);"
+                + "borderWidth : 1;"
+                + "borderColor : rgb(242, 242, 242);"
+                + "focusedBackground : rgb(230, 230, 230);"
+                + "focusedBorderColor : rgb(220, 220, 220)");
         HeaderSelectPanel.revalidate();
         HeaderSelectPanel.repaint();
 
@@ -108,6 +116,14 @@ public class FormDashboard extends javax.swing.JPanel {
             return;
         }
 
+        
+
+        TableModel currentModel = EmployeeTable.getModel();
+        if (!(currentModel instanceof EmployeeTableModel)) {
+            // 모델이 EmployeeTableModel이 아닌 경우 함수를 종료
+            return;
+        }
+
         EmployeeTableModel model = (EmployeeTableModel) EmployeeTable.getModel();
 
         for (int i = 0; i < model.getRowCount(); i++) {
@@ -136,12 +152,12 @@ public class FormDashboard extends javax.swing.JPanel {
 
         JMenuItem deselectChecked = new JMenuItem("선택 체크 해제");
         deselectChecked.addActionListener(e -> {
-            
+
             int[] selectedRows = EmployeeTable.getSelectedRows();
             for (int selectedRow : selectedRows) {
                 EmployeeTable.setValueAt(false, selectedRow, 0); // 첫 번째 열이 체크 박스라고 가정
             }
-             updateButtonState();
+            updateButtonState();
         });
         contextMenu.add(deselectChecked);
         // 메뉴 아이템 생성 및 액션 리스너 추가
@@ -150,7 +166,7 @@ public class FormDashboard extends javax.swing.JPanel {
             for (int i = 0; i < EmployeeTable.getRowCount(); i++) {
                 EmployeeTable.setValueAt(true, i, 0); // 첫 번째 열이 선택 상태를 나타내는 것으로 가정
             }
-             updateButtonState();
+            updateButtonState();
         });
         contextMenu.add(selectAll);
 
@@ -159,7 +175,7 @@ public class FormDashboard extends javax.swing.JPanel {
             for (int i = 0; i < EmployeeTable.getRowCount(); i++) {
                 EmployeeTable.setValueAt(false, i, 0); // 첫 번째 열이 선택 상태를 나타내는 것으로 가정
             }
-             updateButtonState();
+            updateButtonState();
         });
         contextMenu.add(deselectAll);
 
@@ -219,6 +235,10 @@ public class FormDashboard extends javax.swing.JPanel {
             }
         });
 
+    }
+
+    public JButton getSortByBtn() {
+        return SortByBtn;
     }
 
     private void setDrawCellEdited() {
@@ -451,6 +471,7 @@ public class FormDashboard extends javax.swing.JPanel {
         jCheckBox9 = new javax.swing.JCheckBox();
         jCheckBox10 = new javax.swing.JCheckBox();
         filterBtn = new javax.swing.JButton();
+        SortByBtn = new javax.swing.JButton();
         jPanel1 = new javax.swing.JPanel();
         SearchConditionPanel1 = new javax.swing.JPanel();
         allEditLabel = new javax.swing.JLabel();
@@ -581,6 +602,14 @@ public class FormDashboard extends javax.swing.JPanel {
         filterBtn.setIcon(new javax.swing.ImageIcon(getClass().getResource("/companydbmanagerant/icons/filter.png"))); // NOI18N
         filterBtn.setText("Filters");
 
+        SortByBtn.setIcon(new javax.swing.ImageIcon(getClass().getResource("/companydbmanagerant/icons/sort.png"))); // NOI18N
+        SortByBtn.setText("Sort By");
+        SortByBtn.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                SortByBtnActionPerformed(evt);
+            }
+        });
+
         javax.swing.GroupLayout SearchConditionPanelLayout = new javax.swing.GroupLayout(SearchConditionPanel);
         SearchConditionPanel.setLayout(SearchConditionPanelLayout);
         SearchConditionPanelLayout.setHorizontalGroup(
@@ -593,6 +622,8 @@ public class FormDashboard extends javax.swing.JPanel {
                         .addGap(31, 31, 31))
                     .addGroup(SearchConditionPanelLayout.createSequentialGroup()
                         .addComponent(filterBtn, javax.swing.GroupLayout.PREFERRED_SIZE, 114, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(SortByBtn, javax.swing.GroupLayout.PREFERRED_SIZE, 114, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
                 .addComponent(RetrieveDBBtn)
                 .addContainerGap())
@@ -603,7 +634,8 @@ public class FormDashboard extends javax.swing.JPanel {
                 .addContainerGap()
                 .addGroup(SearchConditionPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(RetrieveDBBtn)
-                    .addComponent(filterBtn))
+                    .addComponent(filterBtn)
+                    .addComponent(SortByBtn))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(HeaderSelectPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
@@ -814,6 +846,10 @@ public class FormDashboard extends javax.swing.JPanel {
         // TODO add your handling code here:
     }//GEN-LAST:event_allEditBtnActionPerformed
 
+    private void SortByBtnActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_SortByBtnActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_SortByBtnActionPerformed
+
     public JButton getEmployeeAddBtn() {
         return EmployeeAddBtn;
     }
@@ -885,7 +921,7 @@ public class FormDashboard extends javax.swing.JPanel {
     public List<String> getSelectedCheckBoxLabels() {
         List<String> selectedLabels = new ArrayList<>();
         selectedLabels.add("Selected");
-        for (JCheckBox checkBox : checkBoxList) { 
+        for (JCheckBox checkBox : checkBoxList) {
             if (checkBox.isSelected()) {
                 selectedLabels.add(checkBox.getText());
             }
@@ -902,6 +938,7 @@ public class FormDashboard extends javax.swing.JPanel {
     private javax.swing.JButton RetrieveDBBtn;
     private javax.swing.JPanel SearchConditionPanel;
     private javax.swing.JPanel SearchConditionPanel1;
+    private javax.swing.JButton SortByBtn;
     private javax.swing.JButton allEditBtn;
     private javax.swing.JLabel allEditLabel;
     private javax.swing.JButton filterBtn;

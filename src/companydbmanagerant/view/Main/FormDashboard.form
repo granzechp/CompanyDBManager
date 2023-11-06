@@ -109,6 +109,8 @@
                       </Group>
                       <Group type="102" attributes="0">
                           <Component id="filterBtn" min="-2" pref="114" max="-2" attributes="0"/>
+                          <EmptySpace max="-2" attributes="0"/>
+                          <Component id="SortByBtn" min="-2" pref="114" max="-2" attributes="0"/>
                           <EmptySpace max="32767" attributes="0"/>
                       </Group>
                   </Group>
@@ -124,6 +126,7 @@
                   <Group type="103" groupAlignment="3" attributes="0">
                       <Component id="RetrieveDBBtn" alignment="3" min="-2" max="-2" attributes="0"/>
                       <Component id="filterBtn" alignment="3" min="-2" max="-2" attributes="0"/>
+                      <Component id="SortByBtn" alignment="3" min="-2" max="-2" attributes="0"/>
                   </Group>
                   <EmptySpace max="-2" attributes="0"/>
                   <Component id="HeaderSelectPanel" min="-2" max="-2" attributes="0"/>
@@ -238,6 +241,17 @@
             </Property>
             <Property name="text" type="java.lang.String" value="Filters"/>
           </Properties>
+        </Component>
+        <Component class="javax.swing.JButton" name="SortByBtn">
+          <Properties>
+            <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
+              <Image iconType="3" name="/companydbmanagerant/icons/sort.png"/>
+            </Property>
+            <Property name="text" type="java.lang.String" value="Sort By"/>
+          </Properties>
+          <Events>
+            <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="SortByBtnActionPerformed"/>
+          </Events>
         </Component>
       </SubComponents>
     </Container>
