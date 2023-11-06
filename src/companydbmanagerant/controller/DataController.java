@@ -11,6 +11,7 @@ import companydbmanagerant.model.Employee.Employee;
 import companydbmanagerant.model.Employee.EmployeeDAO;
 import companydbmanagerant.model.LoginFormDataDTO;
 import companydbmanagerant.model.TableModel.AllEditTableModel;
+import companydbmanagerant.model.TableModel.SortByTableModel;
 import companydbmanagerant.view.DataView;
 import companydbmanagerant.view.Main.QueryBuilderForm.QueryBuilderForm;
 
@@ -62,7 +63,10 @@ public class DataController {
 
         //전체변경버튼 리스너 주입
         this.view.addAllEditButtonListener(new AllEditButtonListener(this));
+        
+        this.view.addSortByButtonListener(new SortByButtonListener(this));
 
+   
     }
 
     // ==========================================================
@@ -128,7 +132,10 @@ public class DataController {
     private void retrieveDB() {
         // 여기에서 데이터 처리를 수행하고 뷰를 업데이트하기 위한 메소드 호출
         String condition = SQLQueryBuilder.createWhereClauseIfNotEmpty(view.getQueryCondition());
-        boolean isEmpty = model.buildEmployeeTableModel(condition);
+        String ordersql = model.getOrderSql();
+        
+        System.out.println(condition+ordersql);
+        boolean isEmpty = model.buildEmployeeTableModel(condition+ordersql);
         boolean isColumnNotEmpty = view.updateEmployeeTable(model.getEmployeeTableModel());
 
         //일괄검색패널에 관한것
@@ -503,5 +510,27 @@ public class DataController {
             view.notifyUpdateFailed("데이터베이스 일괄 수정 실패");
 
         }
+    }
+
+    class SortByButtonListener implements ActionListener {
+
+        private DataController controller;
+
+        public SortByButtonListener(DataController controller) {
+            this.controller = controller;
+        }
+
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            controller.executeSortByDialog(); // Controller의 메소드를 호출.
+        }
+    }
+
+    public void executeSortByDialog() {
+        SortByTableModel sortByTableModel = model.getSortByTableModel();
+
+        view.showSortByDialog(sortByTableModel); 
+        
+
     }
 }

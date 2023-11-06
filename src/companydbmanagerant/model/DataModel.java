@@ -16,10 +16,13 @@ import companydbmanagerant.model.Employee.EmployeeUtils;
 import companydbmanagerant.model.Project.Project;
 import companydbmanagerant.model.Project.ProjectDAO;
 import companydbmanagerant.model.TableModel.AllEditTableModel;
+import companydbmanagerant.model.TableModel.Column;
 import companydbmanagerant.model.TableModel.EmployeeTableModel;
+import companydbmanagerant.model.TableModel.SortByTableModel;
 import companydbmanagerant.model.WorksOn.WorksOn;
 import companydbmanagerant.model.WorksOn.WorksOnDAO;
 import java.text.ParseException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -48,6 +51,7 @@ public class DataModel {
     // 테이블모델
     EmployeeTableModel employeeTableModel;
     AllEditTableModel allEditTableModel;
+    SortByTableModel sortByTableModel;
 
     private void TestCode() {
         // 테스트코드: EMPLOYEE
@@ -228,38 +232,18 @@ public class DataModel {
         }
         String columnName = md.getColumnName(2);
         Map<String, String> datas = new HashMap<>();
-        
+
         for (int i = 0; i < md.getRowCount(); i++) {
-            String ssn = (String)md.getValueAt(i, 1);
-            String value = (String)md.getValueAt(i, 3);
+            String ssn = (String) md.getValueAt(i, 1);
+            String value = (String) md.getValueAt(i, 3);
             datas.put(ssn, value);
         }
-        
-        boolean isSuccess = EmployeeDAO.editAllSelectedEmloyee(columnName,datas);
+
+        boolean isSuccess = EmployeeDAO.editAllSelectedEmloyee(columnName, datas);
 
         return isSuccess;
     }
 
-//    public boolean modifyEmployeesInfo(List<Employee> beEditedEmployee, String WhatTodo, String value) {
-//
-//        
-//        if(WhatTodo.equals( "직원성별일괄변경"))
-//        {
-//            EmployeeDAO.allsexChange(value);
-//            
-//        }
-//        return true;
-////        try {
-////        //전달할 객체 생성
-////            Employee employee = EmployeeUtils.createEmployeeFromMap(EditedEmployee);
-////            boolean isSuccessful = EmployeeDAO.insertEmployee(employee);
-////            
-////        } catch (ParseException ex) {
-////            Logger.getLogger(DataModel.class.getName()).log(Level.SEVERE, null, ex);
-////        }
-////        
-////        return true;
-//    }
     //======================================================================
     // 로그인 관련 관련 (MODEL 단)
     //======================================================================   
@@ -300,6 +284,29 @@ public class DataModel {
         return allEditTableModel;
     }
 
+    public SortByTableModel getSortByTableModel() {
+        if (sortByTableModel == null) {
+            List<Column> columns = new ArrayList<>();
+            columns.add(new Column("-", "Fname", "NONE"));
+            columns.add(new Column("-", "Minit", "NONE"));
+            columns.add(new Column("-", "Lname", "NONE"));
+            columns.add(new Column("-", "SSN", "NONE"));
+            columns.add(new Column("-", "Bdate", "NONE"));
+            columns.add(new Column("-", "Address", "NONE"));
+            columns.add(new Column("-", "Sex", "NONE"));
+            columns.add(new Column("-", "Salary", "NONE"));
+            columns.add(new Column("-", "Super_ssn", "NONE"));
+            columns.add(new Column("-", "Dname", "NONE"));
+            sortByTableModel = new SortByTableModel(columns);
+        }
+        return sortByTableModel;
+    }
+    public String getOrderSql() {
+        if (sortByTableModel != null) {
+           return sortByTableModel.getOrderList();
+        }
+        return "";
+    }
     //======================================================================
     // 아래는 모두 JDBC DAO 관련 코드
     //======================================================================
@@ -323,7 +330,6 @@ public class DataModel {
     public List<Employee> getEmployees() {
         return employees;
     }
-
 
     //======================================================================
     //DEPARTMENT==============================================================
@@ -384,7 +390,6 @@ public class DataModel {
     public void loadDeptLocationssFittered(String condition) {
         this.deptlocationss = DeptLocationsDAO.loadDataFittered(condition);   // 데이터베이스에서 DeptLocations 정보 로드
     }
-
 
     public List<DeptLocations> getloadDeptLocationss() {
         return deptlocationss;
